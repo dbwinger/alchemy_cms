@@ -43,7 +43,8 @@ module Alchemy::Upgrader::Tasks
       print "1. Reading `config/alchemy/elements.yml` ... "
 
       old_config_file = Rails.root.join('config', 'alchemy', 'elements.yml')
-      config = YAML.load_file(old_config_file)
+      # config = YAML.load_file(old_config_file)
+      config = ::YAML.safe_load(ERB.new(File.read(old_config_file)).result, [Date, Regexp, Symbol], [], true) || []
 
       if config
         puts "done.\n"
