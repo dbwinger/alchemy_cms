@@ -46,6 +46,32 @@ module Alchemy
         read_definitions_file
       end
 
+      def all_from_clipboard(clipboard)
+        return [] if clipboard.blank?
+
+        where(id: clipboard.collect { |n| n["id"] })
+      end
+
+      def copy_and_paste(source, new_parent, new_name)
+        attributes = source.attributes.except(
+          "id", "created_at", "updated_at", "creator_id", "updater_id",
+          "lft", "rgt", "depth", "parent_id"
+        ).merge(
+          name: new_name,
+          parent: new_parent,
+          language: new_parent&.language || source.language
+        )
+
+        node = create!(attributes)
+
+        # Copy all descendants
+        source.children.each do |child|
+          copy_and_paste(child, node, child.name)
+        end
+
+        node
+      end
+
       private
 
       def searchable_alchemy_resource_associations

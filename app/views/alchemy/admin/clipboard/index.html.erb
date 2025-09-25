@@ -4,7 +4,14 @@
   <% end %>
 <% else %>
   <%= render_message do %>
-    <%= Alchemy.t('Add items from clipboard via "Add Element" button') %>
+    <% case params[:remarkable_type] %>
+    <% when 'pages' %>
+      <%= Alchemy.t('Add items from clipboard via "Add Page" button') %>
+    <% when 'nodes' %>
+      <%= Alchemy.t('Add items from clipboard via "Add Node" button') %>
+    <% else %>
+      <%= Alchemy.t('Add items from clipboard via "Add Element" button') %>
+    <% end %>
   <% end %>
 
   <div id="clipboard_items">
