@@ -3,13 +3,19 @@
 module Alchemy
   module Admin
     class ClipboardController < Alchemy::Admin::BaseController
+      include Alchemy::Admin::Clipboard
+
       REMARKABLE_TYPES = %w[elements pages]
 
       authorize_resource class: :alchemy_admin_clipboard
-      before_action :set_clipboard
+
+      helper_method :remarkable_type
 
       def index
-        @clipboard_items = model_class.all_from_clipboard(@clipboard)
+        raise ActionController::BadRequest unless remarkable_type
+
+        @clipboard_items = clipboard_items
+
         respond_to do |format|
           format.html
         end
@@ -17,39 +23,33 @@ module Alchemy
 
       def insert
         @item = model_class.find(remarkable_params[:remarkable_id])
-        unless @clipboard.detect { |item| item["id"] == remarkable_params[:remarkable_id] }
-          @clipboard << {
+        unless clipboard.detect { |item| item["id"] == remarkable_params[:remarkable_id] }
+          clipboard << {
             "id" => remarkable_params[:remarkable_id],
             "action" => params[:remove] ? "cut" : "copy"
           }
-        end
-        respond_to do |format|
-          format.js
         end
       end
 
       def remove
         @item = model_class.find(remarkable_params[:remarkable_id])
-        @clipboard.delete_if { |item| item["id"] == remarkable_params[:remarkable_id] }
-        respond_to do |format|
-          format.js
-        end
+        remove_resource_from_clipboard(@item)
       end
 
       def clear
-        @clipboard.clear
+        clipboard.clear
       end
 
       private
-
-      def set_clipboard
-        @clipboard = get_clipboard(remarkable_type)
-      end
 
       def model_class
         raise ActionController::BadRequest unless remarkable_type
 
         "alchemy/#{remarkable_type}".classify.constantize
+      end
+
+      def clipboard_type
+        remarkable_type
       end
 
       def remarkable_params
